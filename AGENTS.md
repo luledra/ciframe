@@ -6,9 +6,10 @@ similar songs. Full description: [README.md](README.md).
 
 ## Stack
 
-- Backend: Python 3.9, Flask 3.1, gunicorn. Single file (`main.py`) that
-  loads `data/top/dataset_final.csv` into memory once at startup — there is
-  no database.
+- Backend: Python 3.9, Flask 3.1, gunicorn. `main.py` loads
+  `data/top/dataset_final.csv` into memory once at startup; the only persisted
+  state is the chord-sequence catalog in SQLite (`instance/sequencias.db`,
+  override with `SEQUENCIAS_DB`).
 - Frontend: AngularJS 1.4.9 + jQuery, loaded from CDN in `static/index.html`,
   no build step. Legacy, and there's no plan to modernize the stack itself —
   but touching it is no longer off-limits when a task needs it; see
@@ -21,7 +22,7 @@ Docker (matches how the app actually ships):
 
 ```
 docker build -t ciframe .
-docker run -p 8080:8080 ciframe
+docker run -v ciframe-instance:/app/instance -p 8080:8080 ciframe
 ```
 
 Or a plain virtualenv:
@@ -43,5 +44,6 @@ Done when this returns a JSON array of genre names (e.g. `["Rock", "Samba", ...]
 ## Gotchas
 
 - Editing `data/top/*.csv` requires a restart: it's read once at import time, not per-request.
+- The chord-sequence catalog is persisted in `instance/sequencias.db` (SQLite, override with `SEQUENCIAS_DB`). Mount the `ciframe-instance` volume or custom sequences are lost when the container is removed.
 - Every endpoint returns `json.dumps(...)` as a plain string, not `jsonify` — responses come back `Content-Type: text/html`. This is intentional legacy behavior; changing it is a real API change, not a cleanup.
 - Check `docs/adr/` before changing the deploy setup — it has a documented reason for its current state.
