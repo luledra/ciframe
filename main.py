@@ -39,7 +39,6 @@ def iniciar_db():
         conn.execute('''
             CREATE TABLE IF NOT EXISTS sequencias (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT NULL,
                 acordes_json TEXT NOT NULL,
                 chave_canonica TEXT NOT NULL UNIQUE,
                 origem TEXT NOT NULL,
@@ -51,9 +50,9 @@ def iniciar_db():
         for acordes in SEQUENCIAS_SEED:
             cursor = conn.execute(
                 '''INSERT OR IGNORE INTO sequencias
-                   (nome, acordes_json, chave_canonica, origem, criado_em)
-                   VALUES (?, ?, ?, ?, ?)''',
-                (None, json.dumps(acordes), chave_canonica(acordes),
+                   (acordes_json, chave_canonica, origem, criado_em)
+                   VALUES (?, ?, ?, ?)''',
+                (json.dumps(acordes), chave_canonica(acordes),
                  'seed', criado_em))
             inseridas += cursor.rowcount
         conn.commit()
@@ -91,7 +90,6 @@ def chave_canonica(acordes):
 def sequencia_para_json(linha):
     return {
         'id': linha['id'],
-        'nome': linha['nome'],
         'acordes': json.loads(linha['acordes_json']),
         'origem': linha['origem'],
         'criado_em': linha['criado_em'],
@@ -101,7 +99,7 @@ def buscar_sequencia_por_chave(chave):
     conn = abrir_db()
     try:
         linha = conn.execute(
-            '''SELECT id, nome, acordes_json, origem, criado_em
+            '''SELECT id, acordes_json, origem, criado_em
                FROM sequencias WHERE chave_canonica = ?''', (chave,)).fetchone()
     finally:
         conn.close()
@@ -267,7 +265,7 @@ def get_sequencias():
     conn = abrir_db()
     try:
         linhas = conn.execute(
-            '''SELECT id, nome, acordes_json, origem, criado_em
+            '''SELECT id, acordes_json, origem, criado_em
                FROM sequencias ORDER BY id''').fetchall()
     finally:
         conn.close()
@@ -282,13 +280,6 @@ def post_sequencias():
 
     try:
         acordes = normalizar_acordes(payload.get('acordes'))
-        nome = payload.get('nome')
-        if nome is not None:
-            if not isinstance(nome, str):
-                raise ValueError('nome deve ser um texto')
-            nome = nome.strip() or None
-            if nome is not None and len(nome) > 100:
-                raise ValueError('nome deve ter no maximo 100 caracteres')
     except ValueError as erro:
         return json.dumps({'erro': str(erro)}), 400
 
@@ -296,7 +287,7 @@ def post_sequencias():
     conn = abrir_db()
     try:
         existente = conn.execute(
-            '''SELECT id, nome, acordes_json, origem, criado_em
+            '''SELECT id, acordes_json, origem, criado_em
                FROM sequencias WHERE chave_canonica = ?''', (chave,)).fetchone()
         if existente:
             registro = sequencia_para_json(existente)
@@ -307,14 +298,14 @@ def post_sequencias():
         try:
             cursor = conn.execute(
                 '''INSERT INTO sequencias
-                   (nome, acordes_json, chave_canonica, origem, criado_em)
-                   VALUES (?, ?, ?, ?, ?)''',
-                (nome, json.dumps(acordes), chave, 'custom', criado_em))
+                   (acordes_json, chave_canonica, origem, criado_em)
+                   VALUES (?, ?, ?, ?)''',
+                (json.dumps(acordes), chave, 'custom', criado_em))
             conn.commit()
         except sqlite3.IntegrityError:
             conn.rollback()
             existente = conn.execute(
-                '''SELECT id, nome, acordes_json, origem, criado_em
+                '''SELECT id, acordes_json, origem, criado_em
                    FROM sequencias WHERE chave_canonica = ?''',
                 (chave,)).fetchone()
             registro = sequencia_para_json(existente)
@@ -322,7 +313,7 @@ def post_sequencias():
             return json.dumps(registro), 200
 
         linha = conn.execute(
-            '''SELECT id, nome, acordes_json, origem, criado_em
+            '''SELECT id, acordes_json, origem, criado_em
                FROM sequencias WHERE id = ?''', (cursor.lastrowid,)).fetchone()
         return json.dumps(sequencia_para_json(linha)), 201
     finally:

@@ -45,11 +45,8 @@ class SequenciasTestCase(unittest.TestCase):
             pagina += 1
         return ids
 
-    def _criar_sequencia(self, acordes, nome=None):
-        payload = {'acordes': acordes}
-        if nome is not None:
-            payload['nome'] = nome
-        return self.client.post('/sequencias', json=payload)
+    def _criar_sequencia(self, acordes):
+        return self.client.post('/sequencias', json={'acordes': acordes})
 
     def _musica_com_cifra_curta(self):
         chaves_existentes = self._chaves_customizadas()
@@ -75,17 +72,16 @@ class SequenciasTestCase(unittest.TestCase):
                 main.SEQUENCIAS_SEED)
         for sequencia in seeds:
             self.assertEqual(sequencia['origem'], 'seed')
-            self.assertIsNone(sequencia['nome'])
+            self.assertNotIn('nome', sequencia)
             self.assertIn('criado_em', sequencia)
 
     def test_post_cria_sequencia_nova(self):
-        resposta = self._criar_sequencia(
-                ['D', 'A', 'Bm', 'G'], 'Minha sequência')
+        resposta = self._criar_sequencia(['D', 'A', 'Bm', 'G'])
 
         self.assertEqual(resposta.status_code, 201)
         dados = json_da_resposta(resposta)
         self.assertIsInstance(dados['id'], int)
-        self.assertEqual(dados['nome'], 'Minha sequência')
+        self.assertNotIn('nome', dados)
         self.assertEqual(dados['acordes'], ['D', 'A', 'Bm', 'G'])
         self.assertEqual(dados['origem'], 'custom')
         self.assertIn('criado_em', dados)
@@ -101,11 +97,11 @@ class SequenciasTestCase(unittest.TestCase):
                 ['F', 'Dm', 'Bb', 'C'])
 
     def test_post_duplicada_retorna_200_com_registro_existente(self):
-        primeiro = self._criar_sequencia(['DupA', 'DupB'], 'Primeira')
+        primeiro = self._criar_sequencia(['DupA', 'DupB'])
         self.assertEqual(primeiro.status_code, 201)
         original = json_da_resposta(primeiro)
 
-        segundo = self._criar_sequencia(' dupa , dupb ', 'Outra')
+        segundo = self._criar_sequencia(' dupa , dupb ')
 
         self.assertEqual(segundo.status_code, 200)
         duplicada = json_da_resposta(segundo)
@@ -121,8 +117,6 @@ class SequenciasTestCase(unittest.TestCase):
             {'acordes': ['', '  ']},
             {'acordes': [1, 2]},
             {'acordes': ','.join(['C'] * 17)},
-            {'acordes': 'C', 'nome': 123},
-            {'acordes': 'C', 'nome': 'x' * 101},
         ]
 
         for payload in payloads:
@@ -144,7 +138,7 @@ class SequenciasTestCase(unittest.TestCase):
     def test_busca_sequencia_customizada(self):
         candidata = self._musica_com_cifra_curta()
 
-        resposta = self._criar_sequencia(candidata.cifra, 'Customizada')
+        resposta = self._criar_sequencia(candidata.cifra)
         self.assertIn(resposta.status_code, (200, 201))
         sequencia = ','.join(candidata.cifra)
 
@@ -186,14 +180,14 @@ class SequenciasTestCase(unittest.TestCase):
 
     def test_persistencia_em_nova_conexao(self):
         acordes = ['PersistA', 'PersistB']
-        resposta = self._criar_sequencia(acordes, 'Persistente')
+        resposta = self._criar_sequencia(acordes)
         self.assertEqual(resposta.status_code, 201)
         criada = json_da_resposta(resposta)
 
         conn = sqlite3.connect(main.CAMINHO_DB)
         try:
             linha = conn.execute(
-                    '''SELECT id, nome, acordes_json, origem
+                    '''SELECT id, acordes_json, origem
                        FROM sequencias WHERE chave_canonica = ?''',
                     (main.chave_canonica(acordes),)).fetchone()
         finally:
@@ -201,9 +195,8 @@ class SequenciasTestCase(unittest.TestCase):
 
         self.assertIsNotNone(linha)
         self.assertEqual(linha[0], criada['id'])
-        self.assertEqual(linha[1], 'Persistente')
-        self.assertEqual(json.loads(linha[2]), acordes)
-        self.assertEqual(linha[3], 'custom')
+        self.assertEqual(json.loads(linha[1]), acordes)
+        self.assertEqual(linha[2], 'custom')
 
     def test_genero_rb_normalizado(self):
         self.assertIn('R&B', main.generos)

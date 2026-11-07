@@ -12,7 +12,7 @@ angular.module('deciframeApp').controller('SequenciaController', function($http,
   vm.generos = [];
   vm.erroGeneros = false;
   vm.meuGenero = "";
-  vm.novaSequencia = { nome: '', acordes: '' };
+  vm.novaSequencia = { acordes: '' };
   vm.cadastrando = false;
   vm.mensagem = "";
   vm.erro = "";
@@ -32,7 +32,6 @@ angular.module('deciframeApp').controller('SequenciaController', function($http,
         return {
           index: sequencia.id,
           id: sequencia.id,
-          nome: sequencia.nome,
           acordes: sequencia.acordes.map(function(acorde) {
             return { acorde: acorde, cor: COR_PADRAO };
           })
@@ -69,7 +68,6 @@ angular.module('deciframeApp').controller('SequenciaController', function($http,
     vm.cadastrando = true;
 
     $http.post('sequencias', {
-      nome: vm.novaSequencia.nome,
       acordes: vm.novaSequencia.acordes
     }).then(function(response) {
       vm.cadastrando = false;
@@ -78,7 +76,7 @@ angular.module('deciframeApp').controller('SequenciaController', function($http,
       } else {
         vm.mensagem = "Sequência cadastrada com sucesso!";
       }
-      vm.novaSequencia = { nome: '', acordes: '' };
+      vm.novaSequencia = { acordes: '' };
       carregarSequencias();
     }, function(response) {
       vm.cadastrando = false;

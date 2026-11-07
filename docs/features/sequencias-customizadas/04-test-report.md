@@ -10,8 +10,7 @@ Suíte automatizada em `tests/test_sequencias.py`, usando `unittest` e
 - `POST /sequencias` — criação nova (201), aceite de `acordes` como string,
   deduplicação por chave canônica (200 + `duplicada: true`) inclusive com
   variação de caixa/espaços, e rejeição de payload inválido (400) para corpo
-  não-objeto, lista vazia, acordes vazios, mais de 16 acordes, tipos errados e
-  nome acima de 100 caracteres.
+  não-objeto, lista vazia, acordes vazios, mais de 16 acordes e tipos errados.
 - Busca por sequência customizada criada via `POST`, agregando todas as
   páginas de `/similares?sequencia=...`.
 - Busca case-insensitive: a mesma sequência em minúsculas e maiúsculas

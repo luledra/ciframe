@@ -169,18 +169,10 @@ a:active {
 }
 .sequencia-form input {
   margin-bottom: 8px;
+  color: #000000;
 }
 .sequencia-form p {
   margin: 8px 0 0 0;
-}
-.sequencia-nome {
-  clear: both;
-  padding-top: 6px;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #FFFFFF;
 }
 /* Acorde directive*/
 .acorde-wrapper {

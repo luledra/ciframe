@@ -33,14 +33,14 @@
 ### Backend — persistência
 
 3. [ ] Em `main.py`, definir `CAMINHO_DB` com default `instance/sequencias.db` e override por `SEQUENCIAS_DB`; criar o diretório com `os.makedirs(..., exist_ok=True)`; abrir conexões curtas por operação e ativar `PRAGMA journal_mode=WAL` na inicialização.
-4. [ ] Criar a tabela `sequencias` de forma idempotente (`CREATE TABLE IF NOT EXISTS`) com `id`, `nome`, `acordes_json`, `chave_canonica TEXT NOT NULL UNIQUE`, `origem` e `criado_em`.
+4. [ ] Criar a tabela `sequencias` de forma idempotente (`CREATE TABLE IF NOT EXISTS`) com `id`, `acordes_json`, `chave_canonica TEXT NOT NULL UNIQUE`, `origem` e `criado_em`.
 5. [ ] Definir `SEQUENCIAS_SEED` com as 6 listas na ordem original e inserir com `INSERT OR IGNORE`, `origem='seed'` e `criado_em` em UTC; não sobrescrever sequências customizadas.
-6. [ ] Implementar `normalizar_acordes` (aceita lista ou string, faz `strip`, descarta vazios, preserva a grafia original e gera a chave em minúsculas separada por vírgula) e a validação: 1 a 16 acordes, cada acorde não vazio, `nome` opcional com no máximo 100 caracteres.
+6. [ ] Implementar `normalizar_acordes` (aceita lista ou string, faz `strip`, descarta vazios, preserva a grafia original e gera a chave em minúsculas separada por vírgula) e a validação: 1 a 16 acordes, cada acorde não vazio.
 7. [ ] Implementar helpers de leitura/escrita e a serialização `acordes_json` ↔ lista; logar no startup o caminho do banco e a quantidade de seeds.
 
 ### Backend — API e matching
 
-8. [ ] Implementar `GET /sequencias`: selecionar por `id`, desserializar `acordes_json` e retornar `json.dumps([...])` com `id`, `nome`, `acordes`, `origem` e `criado_em`.
+8. [ ] Implementar `GET /sequencias`: selecionar por `id`, desserializar `acordes_json` e retornar `json.dumps([...])` com `id`, `acordes`, `origem` e `criado_em`.
 9. [ ] Implementar `POST /sequencias`: ler `request.get_json(silent=True)`, validar, inserir e responder com `json.dumps(...)`; criação nova → 201; chave já existente → 200 com o registro existente e `"duplicada": true`; payload inválido → 400 com `{"erro": "..."}`.
 10. [ ] Remover o dicionário `sequencias` hardcoded e o caminho de `/similares` que consulta `musica.seqs_famosas`.
 11. [ ] Implementar `sequencia_aparece_na_musica(cifra_musica, acordes_sequencia)`: normalizar tokens para minúsculas, verificar bloco contíguo na ordem e verificar `set(musica.cifra) ⊆ set(sequencia.acordes)`; varrer `musica.cifra`, nunca `musica.acordes`.
@@ -60,9 +60,9 @@
 
 ### Frontend — catálogo e cadastro
 
-19. [ ] Em `sequencia.js`, remover as 4 sequências hardcoded e carregar `GET /sequencias` na inicialização, mapeando cada linha para `{index, nome, acordes: [{acorde, cor: '#2E1C74'}]}`; manter `createChordsString` e `pesquisarPorSequencia`.
-20. [ ] Em `sequencia.js`, adicionar `vm.novaSequencia = {nome: '', acordes: ''}`, `vm.cadastrando`, `vm.mensagem`, `vm.erro` e `vm.cadastrarSequencia()`: enviar `POST /sequencias`; em 201/200 limpar o formulário, exibir mensagem (200 = já existia) e recarregar o catálogo; em 400 exibir `data.erro`; em falha de rede exibir mensagem genérica.
-21. [ ] Em `sequencia.html`, adicionar formulário com acordes separados por vírgula, nome opcional (até 100 caracteres, com `maxlength="100"`), botão de cadastro e áreas de sucesso/erro; se o nome for exibido na lista, truncá-lo com CSS/tooltip para não quebrar o layout; manter a lista `ng-repeat`, o clique para buscar e os cards de resultado sem alteração.
+19. [ ] Em `sequencia.js`, remover as 4 sequências hardcoded e carregar `GET /sequencias` na inicialização, mapeando cada linha para `{index, acordes: [{acorde, cor: '#2E1C74'}]}`; manter `createChordsString` e `pesquisarPorSequencia`.
+20. [ ] Em `sequencia.js`, adicionar `vm.novaSequencia = {acordes: ''}`, `vm.cadastrando`, `vm.mensagem`, `vm.erro` e `vm.cadastrarSequencia()`: enviar `POST /sequencias`; em 201/200 limpar o formulário, exibir mensagem (200 = já existia) e recarregar o catálogo; em 400 exibir `data.erro`; em falha de rede exibir mensagem genérica.
+21. [ ] Em `sequencia.html`, adicionar formulário com acordes separados por vírgula, botão de cadastro e áreas de sucesso/erro; deixar o texto digitado em preto no campo; manter a lista `ng-repeat`, o clique para buscar e os cards de resultado sem alteração.
 
 ### Testes e verificação
 
@@ -98,8 +98,7 @@
 | Perda do catálogo ao recriar o container | Cadastro some após `docker rm` + container novo | Declarar `VOLUME /app/instance` e documentar volume nomeado; validar `docker restart` e recriação com volume. |
 | Concorrência de escrita no SQLite | Erro `database is locked` | Usar WAL, transações curtas e conexões por operação; manter um worker gunicorn por default. |
 | Lentidão por varrer todas as músicas a cada busca | Aumento de latência em `/similares` | Medir o tempo com o dataset atual; aceitar o custo nesta fase e registrar cache/pré-cálculo como evolução futura. |
-| Payload inválido ou abusivo no catálogo aberto | Respostas 500 ou linhas inconsistentes | Validar tipos, quantidade de acordes, acorde vazio e tamanho do nome; responder 400. Rate limiting fica fora do escopo. |
-| Nome longo quebrar o layout da lista | Texto ultrapassando o card | Limitar a 100 caracteres no backend e truncar a exibição com CSS/tooltip. |
+| Payload inválido ou abusivo no catálogo aberto | Respostas 500 ou linhas inconsistentes | Validar tipos, quantidade de acordes e acorde vazio; responder 400. Rate limiting fica fora do escopo. |
 | Clientes antigos usando `sequencia=CGAmF` | Busca passa a retornar `[]` | Mudança de contrato explícita na proposta/ADR; o frontend já envia vírgulas. |
 | Normalização de `R&B;` aplicada só no conjunto de gêneros | Contagem divergente e filtro por `R&B` sem resultados | Normalizar antes de `generos.add` e da criação de `Musica`; testar a contagem e o filtro. |
 | Catálogo vazio no frontend se `GET /sequencias` falhar | Lista em branco ou sem mensagem | Estado de carregamento e mensagem de erro no controller/template; não remover a busca existente. |
@@ -108,7 +107,6 @@
 
 - [ ] `GET /sequencias` retorna as 6 sequências seed e qualquer sequência customizada persistida, ordenadas por `id`.
 - [ ] `POST /sequencias` cria uma sequência nova (201), deduplica chaves existentes (200 com `duplicada: true`) e rejeita payload inválido (400).
-- [ ] `nome` é opcional, aceita até 100 caracteres e é truncado na lista quando necessário.
 - [ ] As 6 sequências originais continuam retornando exatamente os mesmos conjuntos de músicas de antes (0 faltantes, 0 extras).
 - [ ] Uma sequência cadastrada pode ser buscada por `GET /similares?sequencia=...` usando a regra D.
 - [ ] A busca é case-insensitive e o formato antigo sem vírgulas (`CGAmF`) retorna `[]`.

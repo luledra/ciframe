@@ -76,7 +76,6 @@ Uma única tabela `sequencias`:
 | Campo | Tipo | Observação |
 |---|---|---|
 | `id` | `INTEGER PRIMARY KEY AUTOINCREMENT` | identificador interno |
-| `nome` | `TEXT NULL` | opcional, para exibição |
 | `acordes_json` | `TEXT NOT NULL` | array JSON na ordem cadastrada |
 | `chave_canonica` | `TEXT NOT NULL UNIQUE` | acordes em minúsculas, separados por vírgula |
 | `origem` | `TEXT NOT NULL` | `seed` para as 6, `custom` para novas |
@@ -96,7 +95,7 @@ Todos os endpoints continuam retornando `json.dumps(...)` como string, não
 
 ```
 [
-  {"id": 1, "nome": null, "acordes": ["Bm","G","D","A"],
+  {"id": 1, "acordes": ["Bm","G","D","A"],
    "origem": "seed", "criado_em": "..."},
   ...
 ]
@@ -105,12 +104,12 @@ Todos os endpoints continuam retornando `json.dumps(...)` como string, não
 **`POST /sequencias`** — cadastro anônimo, corpo JSON:
 
 ```
-{"nome": "Pop clássico", "acordes": ["C","G","Am","F"]}
+{"acordes": ["C","G","Am","F"]}
 ```
 
 - Também aceita `"acordes": "C,G,Am,F"` para facilitar o formulário.
-- Validação: lista não vazia após `strip`, no máximo 16 acordes, `nome`
-  opcional com no máximo 100 caracteres, cada acorde não vazio.
+- Validação: lista não vazia após `strip`, no máximo 16 acordes, cada acorde
+  não vazio.
 - Normaliza para `chave_canonica`; se a chave já existir, devolve **200** com o
   registro existente e `"duplicada": true` (idempotente, sem criar linha nova).
 - Criação nova devolve **201** com o registro criado.
@@ -151,10 +150,8 @@ Em `static/templates/sequencia.html`:
 - Manter a lista com `ng-repeat` (`sequencia.html:6-8`); ela passa a refletir o
   catálogo do backend, incluindo as 6 originais e as novas.
 - Adicionar formulário simples com campo de acordes separados por vírgula,
-  campo opcional de nome (até 100 caracteres), botão de cadastro e mensagens
-  de erro/sucesso.
-- Se o nome for exibido na lista, truncá-lo com CSS/tooltip para não quebrar
-  o layout compacto.
+  botão de cadastro e mensagens de erro/sucesso. O texto digitado deve ser
+  preto para contrastar com o fundo branco do campo.
 - O clique em qualquer sequência continua disparando a mesma busca; a
   renderização dos cards (`sequencia.html:24-58`) não muda.
 - O select de gêneros passa a usar `GET /generos` em vez da constante
