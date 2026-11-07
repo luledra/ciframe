@@ -1,4 +1,4 @@
-angular.module('deciframeApp').controller('AcordesController', function($http, $window, ngProgressFactory, $anchorScroll, $location, GENEROS) {
+angular.module('deciframeApp').controller('AcordesController', function($http, $window, ngProgressFactory, $anchorScroll, $location, GenerosService) {
   var acordesC = [
     { 'acorde': 'C',  'cor': '#e6b300' },
     { 'acorde': 'C#', 'cor': '#e6b300' },
@@ -56,9 +56,16 @@ angular.module('deciframeApp').controller('AcordesController', function($http, $
   vm.showSearchResultsCount = false;
   vm.esfigeSpeech =  "";
   vm.musics = [];
-  vm.generos = GENEROS;
+  vm.generos = [];
+  vm.erroGeneros = false;
   vm.meuGenero = "";
   vm.progressbar = ngProgressFactory.createInstance();
+
+  GenerosService.carregar().then(function(generos) {
+    vm.generos = generos;
+  }, function() {
+    vm.erroGeneros = true;
+  });
 
   vm.addAcorde = function(acorde) {
     if (vm.meusAcordes.indexOf(acorde) == -1) {

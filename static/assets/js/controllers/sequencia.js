@@ -1,48 +1,51 @@
-angular.module('deciframeApp').controller('SequenciaController', function($http, $window, ngProgressFactory, $anchorScroll, $location, GENEROS) {
-  var sequencia1 = {
-    'index': 1,
-    'acordes': [
-      { 'acorde': 'Bm', 'cor': '#2E1C74' },
-      { 'acorde': 'G',  'cor': '#2E1C74' },
-      { 'acorde': 'D',  'cor': '#2E1C74' },
-      { 'acorde': 'A',  'cor': '#2E1C74' }
-  ]};
-  var sequencia2 = {
-    'index': 1,
-    'acordes': [
-      { 'acorde': 'C',  'cor': '#2E1C74' },
-      { 'acorde': 'G',  'cor': '#2E1C74' },
-      { 'acorde': 'Am', 'cor': '#2E1C74' },
-      { 'acorde': 'F',  'cor': '#2E1C74' }
-  ]};
-  var sequencia3 = {
-    'index': 1,
-    'acordes': [
-      { 'acorde': 'Gm', 'cor': '#2E1C74' },
-      { 'acorde': 'F',  'cor': '#2E1C74' }
-  ]};
-  var sequencia4 = {
-    'index': 1,
-    'acordes': [
-      { 'acorde': 'C',  'cor': '#2E1C74' },
-      { 'acorde': 'C7', 'cor': '#2E1C74' },
-      { 'acorde': 'F',  'cor': '#2E1C74' },
-      { 'acorde': 'Fm', 'cor': '#2E1C74' }
-  ]};
+angular.module('deciframeApp').controller('SequenciaController', function($http, $window, ngProgressFactory, $anchorScroll, $location, GenerosService) {
+  var COR_PADRAO = '#2E1C74';
   var vm = this;
   vm.sequenciasFamosas = [];
-  vm.sequenciasFamosas.push(sequencia1);
-  vm.sequenciasFamosas.push(sequencia2);
-  vm.sequenciasFamosas.push(sequencia3);
-  vm.sequenciasFamosas.push(sequencia4);
+  vm.carregandoSequencias = true;
+  vm.erroSequencias = false;
   vm.minhaSequencia = {};
   vm.isSearching = false;
   vm.showSearchResultsCount = false;
   vm.esfigeSpeech =  "";
   vm.musics = [];
-  vm.generos = GENEROS;
+  vm.generos = [];
+  vm.erroGeneros = false;
   vm.meuGenero = "";
+  vm.novaSequencia = { nome: '', acordes: '' };
+  vm.cadastrando = false;
+  vm.mensagem = "";
+  vm.erro = "";
   vm.progressbar = ngProgressFactory.createInstance();
+
+  GenerosService.carregar().then(function(generos) {
+    vm.generos = generos;
+  }, function() {
+    vm.erroGeneros = true;
+  });
+
+  var carregarSequencias = function() {
+    vm.carregandoSequencias = true;
+    vm.erroSequencias = false;
+    return $http.get('sequencias').then(function(response) {
+      vm.sequenciasFamosas = response.data.map(function(sequencia) {
+        return {
+          index: sequencia.id,
+          id: sequencia.id,
+          nome: sequencia.nome,
+          acordes: sequencia.acordes.map(function(acorde) {
+            return { acorde: acorde, cor: COR_PADRAO };
+          })
+        };
+      });
+      vm.carregandoSequencias = false;
+    }, function() {
+      vm.carregandoSequencias = false;
+      vm.erroSequencias = true;
+    });
+  };
+
+  carregarSequencias();
 
   vm.temAcorde = function(acorde) {
     if (vm.minhaSequencia.acordes) {
@@ -58,6 +61,33 @@ angular.module('deciframeApp').controller('SequenciaController', function($http,
       str = str.concat(chords[i].acorde, ',');
     }
     return str.substring(0, str.length-1);
+  }
+
+  vm.cadastrarSequencia = function() {
+    vm.mensagem = "";
+    vm.erro = "";
+    vm.cadastrando = true;
+
+    $http.post('sequencias', {
+      nome: vm.novaSequencia.nome,
+      acordes: vm.novaSequencia.acordes
+    }).then(function(response) {
+      vm.cadastrando = false;
+      if (response.status === 200 && response.data.duplicada) {
+        vm.mensagem = "Sequência já existente.";
+      } else {
+        vm.mensagem = "Sequência cadastrada com sucesso!";
+      }
+      vm.novaSequencia = { nome: '', acordes: '' };
+      carregarSequencias();
+    }, function(response) {
+      vm.cadastrando = false;
+      if (response.status === 400 && response.data && response.data.erro) {
+        vm.erro = response.data.erro;
+      } else {
+        vm.erro = "Não foi possível cadastrar a sequência. Tente novamente.";
+      }
+    });
   }
 
   vm.pesquisarPorSequencia = function(sequencia) {

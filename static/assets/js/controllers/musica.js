@@ -1,4 +1,4 @@
-angular.module('deciframeApp').controller('MusicaController', function($http, $window, ngProgressFactory, $anchorScroll, $location, GENEROS) {
+angular.module('deciframeApp').controller('MusicaController', function($http, $window, ngProgressFactory, $anchorScroll, $location, GenerosService) {
   var vm = this;
   vm.acordes = [];
   vm.minhaMusica = {};
@@ -6,10 +6,17 @@ angular.module('deciframeApp').controller('MusicaController', function($http, $w
   vm.showSearchResultsCount = false;
   vm.esfigeSpeech =  "";
   vm.musics = [];
-  vm.generos = GENEROS;
+  vm.generos = [];
+  vm.erroGeneros = false;
   vm.meuGenero = "";
   vm.progressbar = ngProgressFactory.createInstance();
   var apiUrl = "";
+
+  GenerosService.carregar().then(function(generos) {
+    vm.generos = generos;
+  }, function() {
+    vm.erroGeneros = true;
+  });
 
   vm.getMusicas = function(val) {
     vm.progressbar.start();
