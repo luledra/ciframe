@@ -72,7 +72,7 @@ angular.module('deciframeApp').controller('SequenciaController', function($http,
     }).then(function(response) {
       vm.cadastrando = false;
       if (response.status === 200 && response.data.duplicada) {
-        vm.mensagem = "Sequência já existente.";
+        vm.mensagem = "Sequência já cadastrada.";
       } else {
         vm.mensagem = "Sequência cadastrada com sucesso!";
       }
