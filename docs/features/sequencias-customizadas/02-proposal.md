@@ -110,7 +110,7 @@ Todos os endpoints continuam retornando `json.dumps(...)` como string, não
 
 - Também aceita `"acordes": "C,G,Am,F"` para facilitar o formulário.
 - Validação: lista não vazia após `strip`, no máximo 16 acordes, `nome`
-  opcional com no máximo 80 caracteres, cada acorde não vazio.
+  opcional com no máximo 100 caracteres, cada acorde não vazio.
 - Normaliza para `chave_canonica`; se a chave já existir, devolve **200** com o
   registro existente e `"duplicada": true` (idempotente, sem criar linha nova).
 - Criação nova devolve **201** com o registro criado.
@@ -151,7 +151,10 @@ Em `static/templates/sequencia.html`:
 - Manter a lista com `ng-repeat` (`sequencia.html:6-8`); ela passa a refletir o
   catálogo do backend, incluindo as 6 originais e as novas.
 - Adicionar formulário simples com campo de acordes separados por vírgula,
-  campo opcional de nome, botão de cadastro e mensagens de erro/sucesso.
+  campo opcional de nome (até 100 caracteres), botão de cadastro e mensagens
+  de erro/sucesso.
+- Se o nome for exibido na lista, truncá-lo com CSS/tooltip para não quebrar
+  o layout compacto.
 - O clique em qualquer sequência continua disparando a mesma busca; a
   renderização dos cards (`sequencia.html:24-58`) não muda.
 - O select de gêneros passa a usar `GET /generos` em vez da constante
