@@ -103,6 +103,17 @@
 | Normalização de `R&B;` aplicada só no conjunto de gêneros | Contagem divergente e filtro por `R&B` sem resultados | Normalizar antes de `generos.add` e da criação de `Musica`; testar a contagem e o filtro. |
 | Catálogo vazio no frontend se `GET /sequencias` falhar | Lista em branco ou sem mensagem | Estado de carregamento e mensagem de erro no controller/template; não remover a busca existente. |
 
+## Pendências
+
+Itens em aberto, fora da implementação desta fase:
+
+- [ ] Definir com o cliente a lista de acordes válidos e validar os acordes
+  informados no cadastro (hoje qualquer texto não vazio é aceito).
+- [ ] Definir com o cliente a semântica da busca por sequência: apenas músicas
+  que usam só a sequência (regra D atual) ou qualquer música em que a sequência
+  aparece, mesmo com outros acordes. A decisão pode alterar o matching e o
+  baseline de regressão.
+
 ## Definição de pronto
 
 - [ ] `GET /sequencias` retorna as 6 sequências seed e qualquer sequência customizada persistida, ordenadas por `id`.

@@ -215,3 +215,20 @@ Em `static/templates/sequencia.html`:
 - Rate limiting/antispam do catálogo aberto: a aplicação é local-only; fica como
   possível evolução futura.
 - Deploy em nuvem ou múltiplos serviços: continua local-only via Docker.
+
+## Pendências e definições em aberto
+
+Os dois pontos abaixo não estão fechados na especificação e precisam de
+definição antes de endurecer o contrato:
+
+- **Validação de acordes válidos:** o cadastro hoje aceita qualquer texto não
+  vazio (até 16 acordes). Falta definir, com o cliente, quais são os acordes
+  possíveis (por exemplo, a lista de acordes do catálogo ou uma notação
+  suportada) e passar a rejeitar acordes fora desse conjunto.
+- **Semântica da busca por sequência:** a implementação atual usa a regra D —
+  a sequência precisa aparecer como bloco contíguo ordenado e a música não pode
+  usar nenhum acorde fora da sequência. Falta confirmar com o cliente se esse é
+  o comportamento desejado (“músicas que possuem apenas aquela sequência e mais
+  nenhuma”) ou se a busca deve retornar músicas em que a sequência aparece,
+  mesmo que tenham outros acordes. A resposta muda o algoritmo de matching e o
+  baseline de regressão das 6 sequências.
